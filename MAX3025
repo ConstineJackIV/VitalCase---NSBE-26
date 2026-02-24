@@ -1,0 +1,33 @@
+#include <Wire.h>
+
+// MAX30205 I2C address
+#define MAX30205_ADDRESS 0x48
+
+void setup() {
+  Wire.begin(); // Initialize I2C communication
+  Serial.begin(9600); // Initialize serial communication for debugging
+}
+
+void loop() {
+  float temperature = readTemperature();
+  Serial.print("Temperature: ");
+  Serial.print(temperature);
+  Serial.println(" °C");
+  delay(1000); // Wait 1 second before the next reading
+}
+
+float readTemperature() {
+  Wire.beginTransmission(MAX30205_ADDRESS); // Start communication with MAX30205
+  Wire.write(0x00); // Point to the temperature register
+  Wire.endTransmission(false); // Send the address and keep the connection active
+
+  Wire.requestFrom(MAX30205_ADDRESS, 2); // Request 2 bytes of temperature data
+  if (Wire.available() == 2) {
+    uint8_t msb = Wire.read(); // Read the most significant byte
+    uint8_t lsb = Wire.read(); // Read the least significant byte
+    int16_t rawTemperature = (msb << 8) | lsb; // Combine the two bytes
+    return rawTemperature * 0.00390625; // Convert to Celsius (0.0625°C per LSB)
+  } else {
+    return NAN; // Return NaN if data is not available
+  }
+}
